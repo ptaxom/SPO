@@ -1,20 +1,28 @@
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <iostream>
-#include <time.h>
+#include <gtk/gtk.h>
 
-int main()
+static void
+activate (GtkApplication* app,
+          gpointer        user_data)
 {
-	time_t ltime;
-	
+  GtkWidget *window;
 
-	for(int i = 0; i < 10; i++)
-	{
-		std::cout << "child\n";
-		usleep(300*1000);
+  window = gtk_application_window_new (app);
+  gtk_window_set_title (GTK_WINDOW (window), "Window");
+  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
+  gtk_widget_show_all (window);
+}
 
-	}
-	return 0;
-}  
+int
+main (int    argc,
+      char **argv)
+{
+  GtkApplication *app;
+  int status;
+
+  app = gtk_application_new ("org.gtk.example", G_APPLICATION_FLAGS_NONE);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+  status = g_application_run (G_APPLICATION (app), argc, argv);
+  g_object_unref (app);
+
+  return status;
+}
