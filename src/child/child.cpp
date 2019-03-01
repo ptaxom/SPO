@@ -58,6 +58,9 @@ GdkRGBA getColor(int x, int y)
 }
 
 
+#include<random>
+std::random_device rd;
+
 void draw(GtkWidget *widget, cairo_t *cr)
 {
 
@@ -72,7 +75,6 @@ void draw(GtkWidget *widget, cairo_t *cr)
             gdk_cairo_set_source_rgba(cr, &color);
             cairo_fill (cr);
         }
-        usleep(500 * (1 + rand() % 10));
     }
     else
     {
@@ -91,10 +93,18 @@ void draw(GtkWidget *widget, cairo_t *cr)
     
 }
 
+void quit_handler(void)
+{
+    if (cache)
+        delete cache;
+    gtk_main_quit();        
+    int pid = getpid();
+    killpg(getpgid(pid), SIGKILL);
+}
+
 
 void initGTK(int argc, char **argv)
 {
-    srand(time(NULL));
     GtkWidget *window;
     GtkWidget *darea;
     gtk_init(&argc, &argv);
@@ -112,7 +122,7 @@ void initGTK(int argc, char **argv)
 
     cache = new unsigned char[width * height];
 
-    g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
+    g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(quit_handler), NULL);
     g_signal_connect(G_OBJECT(darea), "draw", G_CALLBACK(draw), NULL);
 
     g_timeout_add(30, (GSourceFunc)timeout, window);
@@ -124,9 +134,6 @@ void initGTK(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    // for(int i = 0; i < 8; i++)
-    //     std::cout << "Arg " << std::string(argv[i]) << std::endl;
-        // printf("%s\n", argv[i]);
     if (argc == 8)
     {
 
@@ -138,9 +145,6 @@ int main(int argc, char **argv)
         y_start  = std::stod(std::string(argv[5]));
         x_end    = std::stod(std::string(argv[6]));
         y_end    = std::stod(std::string(argv[7]));
-
-        std::cout << getpid() << " offset x: " << offset_x << std::endl;
-        std::cout << getpid() << " offset y: " << offset_y << std::endl;
 
         dx = (x_end - x_start) / (double)width;
         dy = (y_end - y_start) / (double)height;
