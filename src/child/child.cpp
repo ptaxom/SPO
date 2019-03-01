@@ -17,13 +17,28 @@ int y = 0;
 double x_start = -1.5, y_start = 1, x_end = 1.5, y_end = -1;
 double dx, dy;
 
+unsigned char * cache;
+int cached_region = 0;
+bool cached = false;
+
 gboolean timeout(GtkWidget *widget)
 {
     y++;
     if (y >= height)
+    {
+        cached = true;
+        gtk_widget_queue_draw(widget);
         return FALSE;
+    }
     gtk_widget_queue_draw_area(widget, 0, y, width, 1);
     return TRUE;
+}
+
+
+GdkRGBA parseColor(double i)
+{
+    GdkRGBA cl = {i / 256, 0, 0, 1};
+    return cl;
 }
 
 GdkRGBA getColor(int x, int y)
@@ -31,15 +46,15 @@ GdkRGBA getColor(int x, int y)
     double curX = x_start + (double)x * dx;
     double curY = y_start + (double)y * dy;
     std::complex<double> C(curX, curY), Z(0, 0);
-    int iter = 0;
+    unsigned char iter = 0;
     while(iter < 255 && (Z.imag() * Z.imag() + Z.real() * Z.real() < 4.0))
     {
         Z = Z * Z + C;
         iter++;
     }
     double i = (double)iter;
-    GdkRGBA cl = {i / 256, 0, 0, 1};
-    return cl;
+    cache[cached_region++] = iter;
+    return parseColor(i);
 }
 
 
@@ -48,20 +63,38 @@ void draw(GtkWidget *widget, cairo_t *cr)
 
     GtkWidget *window = gtk_widget_get_toplevel(widget);
     gtk_window_get_size(GTK_WINDOW(window), &width, &height);
-
-    for (int x = 0; x < width; x++)
-    {
-        GdkRGBA color = getColor(x, y);
-        cairo_rectangle (cr, x, y, 1, 1);
-        gdk_cairo_set_source_rgba(cr, &color);
-        cairo_fill (cr);
+    
+    if (!cached){
+        for (int x = 0; x < width; x++)
+        {
+            GdkRGBA color = getColor(x, y);
+            cairo_rectangle (cr, x, y, 1, 1);
+            gdk_cairo_set_source_rgba(cr, &color);
+            cairo_fill (cr);
+        }
+        usleep(500 * (1 + rand() % 10));
     }
+    else
+    {
+        for(int i = 0; i < cached_region; i++)
+            {
+                GdkRGBA color = parseColor(cache[i]);
+                int x = i % width;
+                int y = i / width;
+                cairo_rectangle (cr, x, y, 1, 1);
+                gdk_cairo_set_source_rgba(cr, &color);
+                cairo_fill (cr);
+            }   
 
+
+    }
+    
 }
 
 
 void initGTK(int argc, char **argv)
 {
+    srand(time(NULL));
     GtkWidget *window;
     GtkWidget *darea;
     gtk_init(&argc, &argv);
@@ -77,13 +110,16 @@ void initGTK(int argc, char **argv)
 
     gtk_window_set_default_size(GTK_WINDOW(window), width, height);
 
+    cache = new unsigned char[width * height];
+
     g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);
     g_signal_connect(G_OBJECT(darea), "draw", G_CALLBACK(draw), NULL);
 
-    g_timeout_add(30 + 10 * (rand() % 10), (GSourceFunc)timeout, window);
+    g_timeout_add(30, (GSourceFunc)timeout, window);
 
     gtk_widget_show_all(window);
     gtk_main();
+    delete cache;
 }
 
 int main(int argc, char **argv)

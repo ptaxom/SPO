@@ -12,11 +12,16 @@
 #include <vector>
 #include <stdlib.h>
 
-std::vector<std::complex<double>> points = {{-1.5, 1}, {0, 0}, {0, 1}, {1, 0}, {-1.5, 0}, {0, -1}, {0, 0}, {1.5, 1}};
+std::vector<std::complex<double>> points = 
+{
+{-1.5, 1},  {0, 0},
+{0, 1},     {1.5, 0},
+{-1.5, 0},  {0, -1},
+{0, 0},    {1.5, 1}};
 
 
-int width = 500;
-int height = 500;
+int width = 600;
+int height = 400;
 
 std::vector<int> offsets = {0, 0, width, 0, 0, height, width, height};
 
@@ -28,14 +33,12 @@ char* str_cast(T val)
 	cArr[str.length()] = '\0';
 	for(int i = 0; i < str.length(); i++)
 		cArr[i] = str[i];
-	// return const_cast<char*>(std::to_string(val).c_str());
 	return cArr;
 }
 
 
 void run_process(int num)
 {
-	// std::cout << typeid("123").name() << std::endl;
 	char **args = (char**)malloc(sizeof(char*) * 8);
 	args[0] = str_cast(offsets[2 * num]);
 	args[1] = str_cast(offsets[2 * num + 1]);
@@ -45,14 +48,6 @@ void run_process(int num)
 	args[5] = str_cast(points[2 * num].imag());
 	args[6] = str_cast(points[2 * num + 1].real());
 	args[7] = str_cast(points[2 * num + 1].imag());
-
-	// int code = execlp("./child",
-	// 	  str_cast(offsets[2 * num]), str_cast(offsets[2 * num + 1])
-	// 	  str_cast(300), str_cast(300),
-	// 	  str_cast(points[2 * num].real()),
-	// 	  str_cast(points[2 * num].imag()),
-	// 	  str_cast(points[2 * num + 1].real()), str_cast(points[2 * num + 1].imag()),
-	// 	  NULL);
 	execvp("./child", args);
 }
 
