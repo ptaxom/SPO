@@ -1,0 +1,63 @@
+#include <gtk/gtk.h>
+#include <iostream>
+
+
+int width = 300;
+int height = 300;
+int y = 0;
+
+GtkWidget *window, *drawing_area;
+
+gint TimerCallback (gpointer data)
+{
+    y++;    
+    gtk_widget_queue_draw(area);
+    return y < height ? 1 : 0;
+}
+
+
+gboolean draw_callback (GtkWidget *widget, cairo_t *cr, gpointer data)
+{
+    guint width, height;
+    GdkRGBA color;
+    GtkStyleContext *context;
+
+    context = gtk_widget_get_style_context (widget);
+    width = gtk_widget_get_allocated_width (widget);
+    height = gtk_widget_get_allocated_height (widget);
+    gtk_render_background(context, cr, 0, 0, width, height);
+
+    // cairo_arc (cr, width/2.0, height/2.0, MIN (width, height) / 2.0, 0, 2 * G_PI);
+    cairo_arc (cr, 300, 300, (double)y / height * 100.0, 0, 2 * G_PI);
+    gtk_style_context_get_color (context, gtk_style_context_get_state (context), &color);
+    gdk_cairo_set_source_rgba (cr, &color);
+    gdk_cairo_set_source_rgba (cr, &color);
+    cairo_fill (cr);
+    return FALSE;
+}
+
+gint main(int argc,char *argv[])
+{
+    
+
+    gtk_init (&argc, &argv);
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+
+    drawing_area = gtk_drawing_area_new();
+    gtk_container_add (GTK_CONTAINER (window), drawing_area);
+    gtk_widget_set_size_request (drawing_area, 600, 600);
+    g_signal_connect (G_OBJECT (drawing_area), "draw", G_CALLBACK (draw_callback), NULL);
+
+    gint timer = gtk_timeout_add (50, TimerCallback, NULL);
+    g_timeout_add
+
+	gtk_widget_show_all (window);
+    gtk_main ();
+    return 0;
+}
+
+// 	GdkRGBA color = {r/100.0, 1.5*r/200, 0, 1};
+	// 	cairo_arc (cairo, 300, 300, r, 0, 2 * G_PI);
+    // 	gdk_cairo_set_source_rgba (cairo, &color);
+    // 	cairo_fill (cairo);

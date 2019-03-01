@@ -10,38 +10,39 @@
 int main(int argc, char **argv)
 {
 
-	time_t ltime;
-	pid_t pid = fork();
 
-	int st;
-
-	switch(pid)
-	{
-		case -1: {
+		pid_t pid = fork();
+		int st;
+		switch (pid)
+		{
+		case -1:
+		{
 			std::cout << "Error 2" << std::endl;
 			break;
 		}
 
-		case 0: {
-			if(execlp("./child",NULL) == -1)
+		case 0:
+		{
+			if (execlp("./child", NULL) == -1)
 				std::cout << "Error 1" << std::endl;
 			break;
 		}
-
-		default: {
-			for(int i = 0; i < 5; i++)
+		default:
 			{
-				std::cout << "parent" << std::endl;
+			for(int i = 0; i < 50; i++)
+			{
 				sleep(1);
+				std::cout << i << std::endl;
 				if(waitpid(pid,&st,WNOHANG)>0)
-					break;	                                
-			}
-			std::cout << "The child process was terminated.\n\n";
+					break;                                
+			}			
+			std::cout << "The child process was terminated." << std::endl;
 			if (WIFEXITED(st))
 			{
-				std::cout << "1";
+				std::cout <<  ((int)WEXITSTATUS(st)) << std::endl;
+			}
 			}
 		}
-	}
+	
 	return 0;
-} 
+}
