@@ -21,6 +21,9 @@ unsigned char * cache;
 int cached_region = 0;
 bool cached = false;
 
+#include<random>
+std::random_device rd;
+
 gboolean timeout(GtkWidget *widget)
 {
     y++;
@@ -30,7 +33,10 @@ gboolean timeout(GtkWidget *widget)
         gtk_widget_queue_draw(widget);
         return FALSE;
     }
-    gtk_widget_queue_draw_area(widget, 0, y, width, 1);
+    if (rd() % 5 == 1)
+        y--;
+    else
+        gtk_widget_queue_draw_area(widget, 0, y, width, 1);
     return TRUE;
 }
 
@@ -58,8 +64,7 @@ GdkRGBA getColor(int x, int y)
 }
 
 
-#include<random>
-std::random_device rd;
+
 
 void draw(GtkWidget *widget, cairo_t *cr)
 {
