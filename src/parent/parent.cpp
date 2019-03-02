@@ -52,7 +52,7 @@ void init()
 	double dy = (y_end - y_start) / (double)parts;
 	height = -width * dy / dx;
 	int dh = height / parts + 35;
-	int dw = width / parts ;
+	int dw = width / parts;
 	for (int y = 0; y < parts; y++)
 		for (int x = 0; x < parts; x++)
 		{
@@ -61,6 +61,24 @@ void init()
 			offsets.push_back(x * dw);
 			offsets.push_back(y * dh);
 		}
+}
+
+void wait_multiple_pids(std::vector<int> &pids)
+{
+	int status;
+	while (pids.size() > 0)
+	{
+		std::vector<int> to_remove;
+		for (int i = 0; i < pids.size(); i++)
+			if (waitpid(pids[i], &status, WNOHANG) > 0)
+			{
+				if (WIFEXITED(status))
+					std::cout << "Process with pid " << pids[i] << " exited with " << ((int)WEXITSTATUS(status)) << std::endl;
+				to_remove.push_back(i);
+			}
+		for (auto i : to_remove)
+			pids.erase(pids.begin() + i);
+	}
 }
 
 int main(int argc, char **argv)
@@ -76,23 +94,35 @@ int main(int argc, char **argv)
 			if (parts < 1 || parts > 4)
 				throw std::runtime_error("Invalid parts");
 			init();
-			for (int i = 0; i < parts * parts; i++)
+			int threads = parts * parts;
+			std::vector<int> pids;
+			for (int i = 0; i < threads; i++)
 			{
 
 				pid_t cur_pid = fork();
 				if (cur_pid == 0)
 				{
 					usleep(1000 * 100);
-					run_process(parts * parts - i - 1);
+					run_process(threads - i - 1);
+					exit(0);
 				}
+				if (cur_pid < 0)
+				{
+					throw std::runtime_error("cannot create thread");
+				}
+				pids.push_back(cur_pid);
+				int status;
+				waitpid(-1, &status, WNOHANG);
 			}
-			int status;
-			waitpid(0, &status, WNOHANG);
 		}
-		catch(const std::exception &ex)
+		catch (const std::exception &ex)
 		{
-			std::cout << "Exception: " << ex.what() << std::endl; 
+			std::cout << "Exception: " << ex.what() << std::endl;
 		}
+	}
+	else
+	{
+		std::cout << "No enough args: enter width as first param and tiles as second." << std::endl;
 	}
 
 	return 0;
