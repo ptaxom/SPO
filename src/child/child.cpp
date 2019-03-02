@@ -43,8 +43,10 @@ gboolean timeout(GtkWidget *widget)
 
 GdkRGBA parseColor(double i)
 {
-    GdkRGBA cl = {i / 256, 0, 0, 1};
-    return cl;
+    if (i > 254)
+        return {0, 0, 0, 1};
+    return {8*i / 256, (1+cos(i))/2, (1+cos(i * i))/2, 1};
+    return {i/256, 0, 0, 1};
 }
 
 GdkRGBA getColor(int x, int y)
