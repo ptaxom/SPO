@@ -43,7 +43,7 @@ void run_process(int num)
 	args[5] = str_cast(points[2 * num].imag());
 	args[6] = str_cast(points[2 * num + 1].real());
 	args[7] = str_cast(points[2 * num + 1].imag());
-	execvp("./child", args);
+	execvp("./AAchild", args);
 }
 
 void init()
