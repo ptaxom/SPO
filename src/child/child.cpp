@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <complex>
+#include <signal.h>
 
 int offset_x;
 int offset_y;
@@ -21,6 +22,15 @@ bool cached = false;
 #include <random>
 std::random_device rd;
 
+
+void send_usr1_signal()
+{
+
+    int parent_pid = getppid();
+    kill(parent_pid, SIGUSR1);
+}
+
+
 gboolean timeout(GtkWidget *widget)
 {
     y++;
@@ -28,6 +38,7 @@ gboolean timeout(GtkWidget *widget)
     {
         cached = true;
         gtk_widget_queue_draw(widget);
+        send_usr1_signal();
         return FALSE;
     }
     if (rd() % 7 < 3 && y > 1)
@@ -112,6 +123,8 @@ void initGTK(int argc, char **argv)
     gtk_window_move(GTK_WINDOW(window), offset_x, offset_y);
 
     gtk_container_add(GTK_CONTAINER(window), darea);
+
+    gtk_window_set_title(GTK_WINDOW(window), std::to_string(getpid()).c_str());
 
     gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
 

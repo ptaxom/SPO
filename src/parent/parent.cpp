@@ -11,6 +11,24 @@
 #include <string.h>
 #include <vector>
 #include <stdlib.h>
+#include <signal.h>
+
+void handler(int sig_number, siginfo_t *info, void *context)
+{
+	pid_t sender_pid = info->si_pid;
+	printf("Catched SIGUSR1 signal from %d\n", sender_pid);
+}
+
+void init_handler()
+{
+	struct sigaction configuration;
+	sigemptyset(&configuration.sa_mask);
+	configuration.sa_flags = SA_SIGINFO;
+	configuration.sa_sigaction = &handler;
+
+	if (sigaction(SIGUSR1, &configuration, NULL) < 0)
+		throw std::runtime_error("Cannot add SIGUSR1 signal handler");
+}
 
 int width = 1000;
 int height;
@@ -66,19 +84,12 @@ void init()
 void wait_multiple_pids(std::vector<int> &pids)
 {
 	int status;
-	while (pids.size() > 0)
-	{
-		std::vector<int> to_remove;
-		for (int i = 0; i < pids.size(); i++)
-			if (waitpid(pids[i], &status, WNOHANG) > 0)
-			{
-				if (WIFEXITED(status))
-					std::cout << "Process with pid " << pids[i] << " exited with " << ((int)WEXITSTATUS(status)) << std::endl;
-				to_remove.push_back(i);
-			}
-		for (auto i : to_remove)
-			pids.erase(pids.begin() + i);
-	}
+	for (int i = 0; i < pids.size(); i++)
+		if (waitpid(pids[i], &status, 0) > 0)
+		{
+			if (WIFEXITED(status))
+				std::cout << "Process with pid " << pids[i] << " exited with " << ((int)WEXITSTATUS(status)) << std::endl;
+		}
 }
 
 int main(int argc, char **argv)
@@ -87,6 +98,7 @@ int main(int argc, char **argv)
 	{
 		try
 		{
+			init_handler();
 			width = std::stoi(argv[1]);
 			parts = std::stoi(argv[2]);
 			if (width < 100 || width > 1600)
@@ -111,9 +123,9 @@ int main(int argc, char **argv)
 					throw std::runtime_error("cannot create thread");
 				}
 				pids.push_back(cur_pid);
-				int status;
-				waitpid(-1, &status, WNOHANG);
+				// std::cout << "Created process with pid: " << cur_pid << std::endl;
 			}
+			wait_multiple_pids(pids);
 		}
 		catch (const std::exception &ex)
 		{
